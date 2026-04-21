@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ─── Auth & Users ────────────────────────────────────────────────
+// Structured for future SSO integration: add externalId, provider fields later.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("VIEWER")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  catalogItems CatalogItem[]
+  favorites    Favorite[]
+  savedFilters SavedFilter[]
+}
+
+// ─── Core Catalog ────────────────────────────────────────────────
+model CatalogItem {
+  id               String   @id @default(cuid())
+  category         String
+  name             String
+  valueProposition String
+  keyFeatures      String
+  differentiation  String
+  deliveryType     String
+  deliveryModel    String
+  status           String   @default("DRAFT")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  targetIndustryId String
+  targetIndustry   Industry     @relation(fields: [targetIndustryId], references: [id])
+
+  owningOrgId String
+  owningOrg   Organization @relation(fields: [owningOrgId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  useCases   UseCase[]
+  techStacks TechStackEntry[]
+  favorites  Favorite[]
+}
+
+// ─── Use Cases ───────────────────────────────────────────────────
+model UseCase {
+  id              String  @id @default(cuid())
+  customerName    String
+  projectName     String
+  projectOverview String
+  projectSize     Float?
+  duration        String?
+
+  industryId String
+  industry   Industry @relation(fields: [industryId], references: [id])
+
+  catalogItemId String
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Cascade)
+}
+
+// ─── Tech Stack (3-depth hierarchy) ──────────────────────────────
+model TechStackEntry {
+  id           String @id @default(cuid())
+  techDomain   String
+  techCategory String
+  techAsset    String
+
+  catalogItemId String
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Cascade)
+}
+
+// ─── Reference Data ──────────────────────────────────────────────
+model Industry {
+  id   String @id @default(cuid())
+  name String @unique
+
+  catalogItems CatalogItem[]
+  useCases     UseCase[]
+}
+
+model Organization {
+  id   String @id @default(cuid())
+  name String @unique
+
+  catalogItems CatalogItem[]
+}
+
+// ─── User Features ───────────────────────────────────────────────
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  catalogItemId String
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, catalogItemId])
+}
+
+model SavedFilter {
+  id        String   @id @default(cuid())
+  name      String
+  filters   String
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
