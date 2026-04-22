@@ -19,6 +19,9 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export default async function InputPage() {
   const rawItems = await prisma.catalogItem.findMany({
     include: {
