@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const FULL_INCLUDE = {
   targetIndustry: true,
   owningOrg: true,
@@ -10,41 +12,50 @@ const FULL_INCLUDE = {
   favorites: true,
 };
 
-type RouteParams = {
-  params: { id: string };
-};
-
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(
+    _request: NextRequest,
+    { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-
     const item = await prisma.catalogItem.findUnique({
-      where: { id },
+      where: { id: params.id },
       include: FULL_INCLUDE,
     });
 
     if (!item) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      return NextResponse.json(
+          { error: "Item not found" },
+          { status: 404 }
+      );
     }
 
     return NextResponse.json(item);
   } catch (error) {
     console.error("GET /api/catalog/[id] error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch catalog item" },
-      { status: 500 },
+        { error: "Failed to fetch catalog item" },
+        { status: 500 }
     );
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
     const body = await request.json();
+    const { id } = params;
 
-    const existing = await prisma.catalogItem.findUnique({ where: { id } });
+    const existing = await prisma.catalogItem.findUnique({
+      where: { id },
+    });
+
     if (!existing) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      return NextResponse.json(
+          { error: "Item not found" },
+          { status: 404 }
+      );
     }
 
     const {
@@ -62,15 +73,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       techStacks,
     } = body;
 
-    // Delete-and-recreate strategy for nested relations (simpler than diffing for MVP)
     if (useCases !== undefined) {
-      await prisma.useCase.deleteMany({ where: { catalogItemId: id } });
-    }
-    if (techStacks !== undefined) {
-      await prisma.techStackEntry.deleteMany({ where: { catalogItemId: id } });
+      await prisma.useCase.deleteMany({
+        where: { catalogItemId: id },
+      });
     }
 
-    const item = await prisma.catalogItem.update({
+    if (techStacks !== undefined) {
+      await prisma.techStackEntry.deleteMany({
+        where: { catalogItemId: id },
+      });
+    }
+
+    const updated = await prisma.catalogItem.update({
       where: { id },
       data: {
         ...(category !== undefined && { category }),
@@ -83,73 +98,71 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(status !== undefined && { status }),
         ...(targetIndustryId !== undefined && { targetIndustryId }),
         ...(owningOrgId !== undefined && { owningOrgId }),
+
         ...(useCases?.length && {
           useCases: {
-            create: useCases.map(
-              (uc: {
-                customerName: string;
-                projectName: string;
-                projectOverview: string;
-                projectSize?: number;
-                duration?: string;
-                industryId: string;
-              }) => ({
-                customerName: uc.customerName,
-                projectName: uc.projectName,
-                projectOverview: uc.projectOverview,
-                projectSize: uc.projectSize,
-                duration: uc.duration,
-                industryId: uc.industryId,
-              }),
-            ),
+            create: useCases.map((uc: any) => ({
+              customerName: uc.customerName,
+              projectName: uc.projectName,
+              projectOverview: uc.projectOverview,
+              projectSize: uc.projectSize,
+              duration: uc.duration,
+              industryId: uc.industryId,
+            })),
           },
         }),
+
         ...(techStacks?.length && {
           techStacks: {
-            create: techStacks.map(
-              (ts: {
-                techDomain: string;
-                techCategory: string;
-                techAsset: string;
-              }) => ({
-                techDomain: ts.techDomain,
-                techCategory: ts.techCategory,
-                techAsset: ts.techAsset,
-              }),
-            ),
+            create: techStacks.map((ts: any) => ({
+              techDomain: ts.techDomain,
+              techCategory: ts.techCategory,
+              techAsset: ts.techAsset,
+            })),
           },
         }),
       },
       include: FULL_INCLUDE,
     });
 
-    return NextResponse.json(item);
+    return NextResponse.json(updated);
   } catch (error) {
     console.error("PUT /api/catalog/[id] error:", error);
     return NextResponse.json(
-      { error: "Failed to update catalog item" },
-      { status: 500 },
+        { error: "Failed to update catalog item" },
+        { status: 500 }
     );
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+    _request: NextRequest,
+    { params }: { params: { id: string } }
+) {
   try {
     const { id } = params;
 
-    const existing = await prisma.catalogItem.findUnique({ where: { id } });
+    const existing = await prisma.catalogItem.findUnique({
+      where: { id },
+    });
+
     if (!existing) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      return NextResponse.json(
+          { error: "Item not found" },
+          { status: 404 }
+      );
     }
 
-    await prisma.catalogItem.delete({ where: { id } });
+    await prisma.catalogItem.delete({
+      where: { id },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/catalog/[id] error:", error);
     return NextResponse.json(
-      { error: "Failed to delete catalog item" },
-      { status: 500 },
+        { error: "Failed to delete catalog item" },
+        { status: 500 }
     );
   }
 }
