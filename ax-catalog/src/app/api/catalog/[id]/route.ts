@@ -10,11 +10,13 @@ const FULL_INCLUDE = {
   favorites: true,
 };
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = {
+  params: { id: string };
+};
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     const item = await prisma.catalogItem.findUnique({
       where: { id },
@@ -37,7 +39,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
 
     const existing = await prisma.catalogItem.findUnique({ where: { id } });
@@ -133,7 +135,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     const existing = await prisma.catalogItem.findUnique({ where: { id } });
     if (!existing) {
