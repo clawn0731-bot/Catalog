@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { scoreCatalogItems, type SearchCriteria } from "@/lib/scoring";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
