@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 type TechSelect = { techDomain: string; techCategory: string; techAsset: string };
 
 export async function GET() {
