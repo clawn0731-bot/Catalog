@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
 }
 
 datasource db {
@@ -38,7 +39,7 @@ model CatalogItem {
   updatedAt        DateTime @updatedAt
 
   targetIndustryId String
-  targetIndustry   Industry     @relation(fields: [targetIndustryId], references: [id])
+  targetIndustry   Industry @relation(fields: [targetIndustryId], references: [id])
 
   owningOrgId String
   owningOrg   Organization @relation(fields: [owningOrgId], references: [id])
