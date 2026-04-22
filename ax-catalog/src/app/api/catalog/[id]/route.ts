@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const FULL_INCLUDE = {
@@ -12,33 +13,10 @@ const FULL_INCLUDE = {
   favorites: true,
 };
 
-export async function GET(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
-  try {
-    const item = await prisma.catalogItem.findUnique({
-      where: { id: params.id },
-      include: FULL_INCLUDE,
-    });
-
-    if (!item) {
-      return NextResponse.json(
-          { error: "Item not found" },
-          { status: 404 }
-      );
-    }
-
-    return NextResponse.json(item);
-  } catch (error) {
-    console.error("GET /api/catalog/[id] error:", error);
-    return NextResponse.json(
-        { error: "Failed to fetch catalog item" },
-        { status: 500 }
-    );
-  }
+export async function GET() {
+  const items = await prisma.catalogItem.findMany();
+  return NextResponse.json(items);
 }
-
 export async function PUT(
     request: NextRequest,
     { params }: { params: { id: string } }
