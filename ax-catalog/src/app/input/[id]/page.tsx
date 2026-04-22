@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { CatalogForm } from "@/components/catalog/catalog-form";
 import type { TechStackEntry, UseCase } from "@/types";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type Props = {
   params: Promise<{ id: string }>;
 };
